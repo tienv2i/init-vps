@@ -30,6 +30,8 @@ yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
 yum install -y yum-utils
 
 yum-config-manager --enable remi-php74
+
+yum update -y
 yum install -y php php-mysqlnd php-fpm php-common php-mysql php-json php-opcache php-mbstring php-xml php-gd php-curl php-bcmath php-imagick php-pear
 
 systemctl start php-fpm
