@@ -27,7 +27,7 @@ yum install -y php php-mysqlnd php-fpm
 systemctl start php-fpm
 systemctl enable php-fpm
 
-cp ./nginx/nginx.repo /etc/yum.repos.d/nginx.repo
+cp ./nginx.repo /etc/yum.repos.d/nginx.repo
 yum-config-manager --enable nginx-mainline
 yum install -y nginx
 systemctl start nginx
