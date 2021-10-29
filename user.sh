@@ -1,4 +1,6 @@
 #!/bin/bash
+set -x #echo on
+
 echo "root:anhtien!23" | chpasswd
 if [[ $(getent group sudo) ]]
 then
