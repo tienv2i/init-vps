@@ -1,0 +1,9 @@
+user = nginx
+
+group = apache 
+
+listen.owner = nobody
+
+listen.group = nobody
+
+listen = 127.0.0.1:9000
