@@ -1,5 +1,5 @@
-userdel huynhat
-rm -rf /home/huynhat
+#userdel huynhat
+#rm -rf /home/huynhat
 
 yum autoremove -y php php-* nginx mariadb mariadb-*
 
