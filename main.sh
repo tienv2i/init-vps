@@ -27,7 +27,7 @@ yum install -y php php-mysqlnd php-fpm
 systemctl start php-fpm
 systemctl enable php-fpm
 
-cp ./nginx.repo /etc/yum.repos.d/nginx.repo
+cp ./nginx/nginx.repo /etc/yum.repos.d/nginx.repo
 yum-config-manager --enable nginx-mainline
 yum install -y nginx
 systemctl start nginx
@@ -46,4 +46,6 @@ mysql -e "GRANT ALL PRIVILEGES ON `wp_blog`.* TO huynhat@localhost"
 mysql -e "FLUSH PRIVILEGES"
 
 yum update -y
+
+
 
