@@ -12,40 +12,37 @@ then
 else
     echo  "not supported"
 fi
-yum install -y epel-release
+
+yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
 
 yum install -y yum-utils
 
-cd /tmp
+# yum-config-manager --enable remi-php74
+# yum install -y php php-mysqlnd php-fpm
+# systemctl start php-fpm
+# systemctl enable php-fpm
 
-wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-wget https://rpms.remirepo.net/enterprise/remi-release-7.rpm
-rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+# cp ./nginx.repo /etc/yum.repos.d/nginx.repo
+# yum-config-manager --enable nginx-mainline
+# yum install -y nginx
+# systemctl start nginx
+# systemctl enable nginx
 
-yum-config-manager --enable remi-php74
-yum install -y php php-mysqlnd php-fpm
-systemctl start php-fpm
-systemctl enable php-fpm
+# wget https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
+# chmod +x mariadb_repo_setup
+# ./mariadb_repo_setup
+# yum install -y MariaDB-server
 
-cp ./nginx.repo /etc/yum.repos.d/nginx.repo
-yum-config-manager --enable nginx-mainline
-yum install -y nginx
-systemctl start nginx
-systemctl enable nginx
+# systemctl start mariadb.service
+# mysql -e "UPDATE mysql.user SET Password=PASSWORD('anhtien!23') WHERE User='root'"
+# mysql -e "CREATE USER IF NOT EXISTS 'huynhat'@localhost IDENTIFIED BY 'anhtien\$56'"
+# mysql -e "CREATE DATABASE wp_blog CHARACTER SET utf8"
+# mysql -e "GRANT ALL PRIVILEGES ON `wp_blog`.* TO huynhat@localhost"
+# mysql -e "FLUSH PRIVILEGES"
 
-wget https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
-chmod +x mariadb_repo_setup
-./mariadb_repo_setup
-yum install -y MariaDB-server
-
-systemctl start mariadb.service
-mysql -e "UPDATE mysql.user SET Password=PASSWORD('anhtien!23') WHERE User='root'"
-mysql -e "CREATE USER IF NOT EXISTS 'huynhat'@localhost IDENTIFIED BY 'anhtien\$56'"
-mysql -e "CREATE DATABASE wp_blog CHARACTER SET utf8"
-mysql -e "GRANT ALL PRIVILEGES ON `wp_blog`.* TO huynhat@localhost"
-mysql -e "FLUSH PRIVILEGES"
-
-yum update -y
+# yum update -y
 
 
 
