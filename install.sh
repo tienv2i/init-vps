@@ -30,7 +30,7 @@ yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
 yum install -y yum-utils
 
 yum-config-manager --enable remi-php74
-yum install -y php php-mysqlnd php-fpm php-common php-mysql php-json php-opcache php-mbstring php-xml php-gd php-curl
+yum install -y php php-mysqlnd php-fpm php-common php-mysql php-json php-opcache php-mbstring php-xml php-gd php-curl php-bcmath php-imagick php-pear
 
 systemctl start php-fpm
 systemctl enable php-fpm
@@ -76,10 +76,13 @@ yum install -y MariaDB-server
 systemctl start mariadb.service
 systemtel enable mariasb.service
 
-mysql -e "UPDATE mysql.user SET Password=PASSWORD('anhtien!23') WHERE User='root'"
+# mysql -e "UPDATE mysql.user SET Password=PASSWORD(\'anhtien!23\') WHERE User=\'root\'"
+# mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password'"
+# mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_password')"
+
 mysql -e "CREATE USER IF NOT EXISTS 'huynhat'@localhost IDENTIFIED BY 'anhtien\$56'"
 mysql -e "CREATE DATABASE IF NOT EXISTS wp_blog CHARACTER SET utf8"
-mysql -e "GRANT ALL PRIVILEGES ON `wp_blog`.* TO huynhat@localhost"
+mysql -e "GRANT ALL PRIVILEGES ON \`wp_blog\`.* TO huynhat@localhost"
 mysql -e "FLUSH PRIVILEGES"
 
 mkdir /var/www/wp_blog
@@ -126,3 +129,48 @@ systemctl restart nginx
 
 yum install -y certbot python2-certbot-nginx
 certbot run -n --nginx --agree-tos -d huynhanhtien.com,www.huynhanhtien.com  -m  tienv2i@gmail.com  --redirect
+certbot renew --dry-run
+
+yum install -y python3
+yum groups install -y "Development Tools"
+yum install -y ncurses ncurses-devel
+cd /usr/local/share
+git clone https://github.com/vim/vim.git
+cd vim/src
+./configure --with-features=huge \
+--enable-multibyte \
+--enable-rubyinterp=yes \
+--enable-pythoninterp=yes \
+--enable-python3interp=yes \  
+--prefix=/usr/local/vim8
+make
+make install
+touch /home/huynhat/.vimrc
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+ln -s /home/huynhat/.vimrc /root/.vimrc
+ln -sd /home/huynhat/.vim /root/.vim
+ln -s /usr/local/bin/vim /usr/bin/vim
+cat > /home/huynhat/.vimrc << OEF
+call plug#begin('~/.vim/plugged')
+    Plug 'sheerun/vim-polyglot'
+    Plug 'jiangmiao/auto-pairs'
+    Plug 'preservim/nerdtree'
+
+call plug#end()
+set nu
+syntax on
+set incsearch
+set hlsearch
+set backspace=indent,eol,start
+set tabstop=8
+set shiftwidth=4
+set expandtab
+set termwinsize=10x0
+set splitbelow
+set mouse=a
+let g:AutoPairsShortcutToggle = '<C-P>'
+nmap <F2> :NERDTreeToggle<CR>
+OEF
+# vim +PlugInstall
+vim +'PlugInstall --sync' +qall &> /dev/null
