@@ -6,23 +6,25 @@ if [[ $? -eq 0 ]]; then
     setenforce 0
 fi
 
-echo "root:anhtien!23" | chpasswd
+server_name=tineblog.info
+db_username=huynhat
+db_password=anhtien!23
+db_name=wp_blog
 
-if [[ $(getent group sudo) ]]; then
-    group=sudo
-    http_own=www-data
-# elif [[ $(getent group wheel) ]]; then
-#     group = wheel
-else 
-    group=wheel
-    http_own=nginx
-fi
+# $1 as username=huynhat, $2 as password=anhtien456, $3 as root_password=anhtien!23
+[[ -z "$1" ]] && username="huynhat" || username="$1"
+[[ -z "$2" ]] && password="anhtien456" || username="$2"
+[[ -z "$3" ]] && root_password="anhtien!23" || root_password="$3"
 
-if [[ $(getent passwd huynhat) ]]; then
-    useradd -m -s /bin/bash -g $group huynhat
-    # usermod -aG $http_own huynhat
-    echo "huynhat:anhtien456" | chpasswd
-fi
+# check admin group wether sudo or wheel
+[[ -n $(getent group "sudo") ]] && group="sudo" || group="wheel"
+
+# change root password
+echo "root:$root_password" | chpasswd
+
+# create admin user
+[[ -z $(getent passwd $username) ]] && useradd -m -s /bin/bash -g $group
+echo "$username:$password" | chpasswd # change admin password after created
     
 yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
@@ -32,7 +34,7 @@ yum install -y yum-utils
 yum-config-manager --enable remi-php74
 
 yum update -y
-yum install -y php php-mysqlnd php-fpm php-common php-mysql php-json php-opcache php-mbstring php-xml php-gd php-curl php-bcmath php-imagick php-pear
+yum install -y php php-mysqlnd php-fpm php-common php-mysql php-json php-opcache php-mbstring php-xml php-gd php-curl php-bcmath php-imagick php-pear php-zip
 
 systemctl start php-fpm
 systemctl enable php-fpm
@@ -63,8 +65,8 @@ yum install -y nginx
 systemctl start nginx
 systemctl enable nginx
 
-if [[ $(getent passwd huynhat) ]]; then
-    usermod -aG $http_own huynhat
+if [[ $(getent passwd $username) ]]; then
+    usermod -aG $http_own $username
 fi
 
 firewall-cmd --permanent --zone=public --add-service=http --add-service=https 
@@ -76,15 +78,15 @@ chmod +x mariadb_repo_setup
 yum install -y MariaDB-server
 
 systemctl start mariadb.service
-systemtel enable mariasb.service
+systemctl enable mariadb.service
 
 # mysql -e "UPDATE mysql.user SET Password=PASSWORD(\'anhtien!23\') WHERE User=\'root\'"
 # mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password'"
 # mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_password')"
 
-mysql -e "CREATE USER IF NOT EXISTS 'huynhat'@localhost IDENTIFIED BY 'anhtien\$56'"
-mysql -e "CREATE DATABASE IF NOT EXISTS wp_blog CHARACTER SET utf8"
-mysql -e "GRANT ALL PRIVILEGES ON \`wp_blog\`.* TO huynhat@localhost"
+mysql -e "CREATE USER IF NOT EXISTS '$db_username'@localhost IDENTIFIED BY '$db_password'"
+mysql -e "CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8"
+mysql -e "GRANT ALL PRIVILEGES ON \`db_name\`.* TO $db_username@localhost"
 mysql -e "FLUSH PRIVILEGES"
 
 mkdir /var/www/wp_blog
@@ -98,13 +100,17 @@ rm -r /etc/nginx/conf.d/wp_blog.conf
 cat > /etc/nginx/conf.d/wp_blog.conf <<OEL
 server {
     listen   80;
-    server_name  huynhanhtien.com www.huynhanhtien.com;
+    # listen 443 ssl;
+
+    server_name  $server_name www.$server_name;
+
+    client_max_body_size 100M;
 
     root /var/www/wp_blog;
     index index.php index.html index.htm;
 
     location / {
-        try_files \$uri \$uri/ /index.php\$args;
+        try_files \$uri \$uri/ /index.php\$is_args\$args;
     }
 
     location ~ \.php\$ {
@@ -119,18 +125,21 @@ OEL
 nginx -s reload
 systemctl restart php-fpm
 
-sed -i 's/^user\s=\sapache$/user = nginx/' /etc/php-fpm.d/www.conf
-sed -i 's/^group\s=\sapache$/group = nginx/' /etc/php-fpm.d/www.conf
-sed -i 's/^;listen\.owner\s=\snobody$/listen.owner = nginx/' /etc/php-fpm.d/www.conf
-sed -i 's/^;listen\.group\s=\snobody$/listen.group = nginx/' /etc/php-fpm.d/www.conf
-sed -i 's/^;listen\.mode\s=\s0660$/listen.mode = 0660/' /etc/php-fpm.d/www.conf
-sed -i 's/^listen\s=\s[0-9\.\:]*$/listen = \/var\/run\/php-fpm\/php-fpm.sock/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*user\s*=.*$/user = nginx/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*group\s*=.*$/group = nginx/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*listen\.owner\s*=.*$/listen.owner = nginx/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*listen\.group\s*=.*$/listen.group = nginx/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*listen\.mode\s*=.*$/listen.mode = 0660/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*listen\s*=.*$/listen = \/var\/run\/php-fpm\/php-fpm.sock/' /etc/php-fpm.d/www.conf
+sed -iE 's/^[;\s]*upload_max_filesize\s*=.*$/upload_max_filesize = 50M/' /etc/php.ini
+sed -iE 's/^[;\s]*post_max_size\s*=.*$/upload_max_filesize = 55M/' /etc/php.ini
+
 
 systemctl restart php-fpm
 systemctl restart nginx
 
 yum install -y certbot python2-certbot-nginx
-certbot run -n --nginx --agree-tos -d huynhanhtien.com,www.huynhanhtien.com  -m  tienv2i@gmail.com  --redirect
+certbot run -n --nginx --agree-tos -d $server_name,www.$server_name  -m  tienv2i@gmail.com  --redirect
 certbot renew --dry-run
 
 yum install -y python3
@@ -147,13 +156,13 @@ cd vim/src
 --prefix=/usr/local/vim8
 make
 make install
-touch /home/huynhat/.vimrc
+touch /home/$username/.vimrc
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-ln -s /home/huynhat/.vimrc /root/.vimrc
-ln -sd /home/huynhat/.vim /root/.vim
+ln -s /home/$username/.vimrc /root/.vimrc
+ln -sd /home/$username/.vim /root/.vim
 ln -s /usr/local/bin/vim /usr/bin/vim
-cat > /home/huynhat/.vimrc << OEF
+cat > /home/$username/.vimrc << OEF
 call plug#begin('~/.vim/plugged')
     Plug 'sheerun/vim-polyglot'
     Plug 'jiangmiao/auto-pairs'
